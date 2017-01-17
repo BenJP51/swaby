@@ -5,11 +5,7 @@ With luck, this will automatically buy and sell shares in a company.
 
 ```
 git clone https://github.com/benjp51/stockbot.git
+cd swaby && pip install -r requirements.txt
 
-cd stockbot
-```
-## Installation/Usage
-
-```
-pip install yahoo-finance
+python main.py
 ```
