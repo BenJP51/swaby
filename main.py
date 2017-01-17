@@ -1,6 +1,24 @@
 from yahoo_finance import Share
 import time
 
+class Wallet(object):
+
+    def __init__(self):
+        self.cash = 10000
+
+    def buy(self, ID):
+        obj = ShareObj(ID)
+        obj.refresh()
+        self.cash -= float(obj.getPrice())
+
+    def sell(self, ID):
+        obj = ShareObj(ID)
+        obj.refresh()
+        self.cash += float(obj.getPrice())
+
+    def getCash(self):
+        return self.cash
+
 class ShareObj(object):
     def __init__(self, ID):
         self.id = ID
@@ -19,20 +37,35 @@ class ShareObj(object):
     def getChangeFormatted(self):
         self.share.get_percent_change()
 
+    def getID(self):
+        return self.id
+
     def refresh(self):
         self.share.refresh()
 
-amazon = ShareObj("AMZN")
+w = Wallet()
+shre = ShareObj("AAPL")
+
+percentChange = 0.15
+
+print("Initializing...\n")
 
 while(True):
-    if(float(amazon.getChange()) >= 0.25):
-        print("Percent Change:", amazon.getChange())
+    print("Wallet:\t\t\t",w.getCash())
+    print("Percent Change:\t\t", shre.getChange(),"\n")
+
+    if(float(shre.getChange()) >= percentChange):
         print("Buy")
-    elif(float(amazon.getChange()) <= -0.25):
-        print("Percent Change:", amazon.getChange())
+        print("Wallet before buy:\t",w.getCash())
+        w.buy(shre.getID())
+        print("Wallet after buy:\t",w.getCash())
+    elif(float(shre.getChange()) <= (-1*percentChange)):
         print("Sell")
+        print("Waller before sell:\t",w.getCash())
+        w.sell(shre.getID())
+        print("Wallet before sell:t\t",w.getCash())
     else:
-        print("Percent Change:", amazon.getChange())
         print("Do Nothing")
-    amazon.refresh
-    time.sleep(120)
+    print("\n")
+    shre.refresh
+    time.sleep(60)
