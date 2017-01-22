@@ -1,6 +1,1 @@
-{
-	"shares": {
-		"AMZN": [],
-		"AAPL": []
-	}
-}
+{"shares": [{"id": "AMZN", "price": 880}, {"price": "120.00", "id": "AAPL"}, {"price": "120.00", "id": "AAPL"}]}

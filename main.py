@@ -25,17 +25,11 @@ class Wallet():
             file.seek(0)
             file.truncate()
 
-            try:
-                # add new price to appropriate id
-                data['shares'][ID].append({
-                    "price": obj.getPrice()
-                })
-            except AttributeError:
-                # uh oh!!! that ID doesnt exist yet!! just create it :)
-                print(data['shares'])
-                data['shares'].append({
-                    ID: ''
-                })
+            # add new price to appropriate id
+            data['shares'].append({
+                "price": obj.getPrice(),
+                "id": ID
+            })
 
             data = str(data).replace("'", '"')
 
