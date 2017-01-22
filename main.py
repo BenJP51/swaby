@@ -1,7 +1,7 @@
 from yahoo_finance import Share
 import time, json
 
-class Wallet(object):
+class Wallet():
 
     def __init__(self):
         self.cash = 10000
@@ -9,15 +9,32 @@ class Wallet(object):
     def buy(self, ID):
         obj = ShareObj(ID)
         obj.refresh()
+
         self.cash -= float(obj.getPrice())
-        with open('data.json', 'r') as f:
-            data = json.load(f)
-            data.shares.append({"id":ID,"price":obj.getPrice()})
-            print(data)
+
+        with open('data.json', 'r+') as file:
+
+            # read file
+            data = json.load(file)
+
+            # wipe file
+            file.seek(0)
+            file.truncate()
+
+            # add new price to appropriate id
+            data['shares'][ID].append({
+                "price": obj.getPrice()
+            })
+
+            data = str(data).replace("'", '"')
+
+            file.write(data)
+            file.close()
 
     def sell(self, ID):
         obj = ShareObj(ID)
         obj.refresh()
+
         self.cash += float(obj.getPrice())
 
     def getCash(self):
@@ -72,4 +89,4 @@ while(True):
         print("Do Nothing")
     print("\n")
     shre.refresh
-    time.sleep(60)
+    time.sleep(10)
