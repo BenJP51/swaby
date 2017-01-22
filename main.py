@@ -1,5 +1,5 @@
 from yahoo_finance import Share
-import time
+import time, json
 
 class Wallet(object):
 
@@ -10,6 +10,10 @@ class Wallet(object):
         obj = ShareObj(ID)
         obj.refresh()
         self.cash -= float(obj.getPrice())
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+            data.shares.append({"id":ID,"price":obj.getPrice()})
+            print(data)
 
     def sell(self, ID):
         obj = ShareObj(ID)

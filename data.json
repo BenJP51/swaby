@@ -1,0 +1,12 @@
+{
+  "shares": [
+    {
+      "id": "AMZN",
+      "price": 800
+    },
+    {
+      "id": "AAPL",
+      "price": 10
+    }
+  ]
+}
