@@ -1,5 +1,5 @@
 from yahoo_finance import Share
-import time, json
+import time, json, sys
 
 class Wallet():
 
@@ -14,17 +14,28 @@ class Wallet():
 
         with open('data.json', 'r+') as file:
 
-            # read file
-            data = json.load(file)
+            try:
+                # read file
+                data = json.load(file)
+            except json.decoder.JSONDecodeError:
+                print('check your json file')
+                sys.exit(0)
 
             # wipe file
             file.seek(0)
             file.truncate()
 
-            # add new price to appropriate id
-            data['shares'][ID].append({
-                "price": obj.getPrice()
-            })
+            try:
+                # add new price to appropriate id
+                data['shares'][ID].append({
+                    "price": obj.getPrice()
+                })
+            except AttributeError:
+                # uh oh!!! that ID doesnt exist yet!! just create it :)
+                print(data['shares'])
+                data['shares'].append({
+                    ID: ''
+                })
 
             data = str(data).replace("'", '"')
 
@@ -58,9 +69,6 @@ class ShareObj(object):
     def getChangeFormatted(self):
         self.share.get_percent_change()
 
-    def getID(self):
-        return self.id
-
     def refresh(self):
         self.share.refresh()
 
@@ -78,15 +86,15 @@ while(True):
     if(float(shre.getChange()) >= percentChange):
         print("Buy")
         print("Wallet before buy:\t",w.getCash())
-        w.buy(shre.getID())
+        w.buy(shre.id)
         print("Wallet after buy:\t",w.getCash())
     elif(float(shre.getChange()) <= (-1*percentChange)):
         print("Sell")
         print("Waller before sell:\t",w.getCash())
-        w.sell(shre.getID())
+        w.sell(shre.id)
         print("Wallet before sell:t\t",w.getCash())
     else:
         print("Do Nothing")
     print("\n")
     shre.refresh
-    time.sleep(10)
+    time.sleep(5)
