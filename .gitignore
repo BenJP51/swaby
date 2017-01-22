@@ -2,6 +2,9 @@
 #   Python   #
 ##############
 
+# don't bother tracking this anymore
+data.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
