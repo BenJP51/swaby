@@ -26,8 +26,7 @@ class Wallet():
             file.truncate()
 
             try:
-                # add new price to appropriate id
-                data['shares'][ID].append({
+                data['shares'][ID].append({ # add new price to appropriate id
                     "price": obj.getPrice()
                 })
             except AttributeError:
@@ -109,22 +108,23 @@ while(True):
     print("Wallet:\t\t\t",w.getCash())
     print("Percent Change:\t\t", shre.getChange(),"\n")
 
-    #this is for testing only
-    w.sell(shre.id)
+    if(float(shre.getChange()) >= percentChange):
+        print("Buy")
+        print("Wallet before buy:\t",w.getCash())
 
+        w.buy(shre.id)
 
-    # if(float(shre.getChange()) >= percentChange):
-    #     print("Buy")
-    #     print("Wallet before buy:\t",w.getCash())
-    #     w.buy(shre.id)
-    #     print("Wallet after buy:\t",w.getCash())
-    # elif(float(shre.getChange()) <= (-1*percentChange)):
-    #     print("Sell")
-    #     print("Waller before sell:\t",w.getCash())
-    #     w.sell(shre.id)
-    #     print("Wallet before sell:t\t",w.getCash())
-    # else:
-    #     print("Do Nothing")
+        print("Wallet after buy:\t",w.getCash())
+    elif(float(shre.getChange()) <= (-1*percentChange)):
+        print("Sell")
+        print("Waller before sell:\t",w.getCash())
+
+        w.sell(shre.id)
+
+        print("Wallet before sell:t\t",w.getCash())
+    else:
+        print("Do Nothing")
     print("\n")
+
     shre.refresh
     time.sleep(5)
