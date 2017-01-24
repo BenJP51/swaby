@@ -13,27 +13,27 @@ class Wallet():
         self.cash -= float(obj.getPrice())
 
         with open('data.json', 'r+') as file:
-
             try:
-                # read file
-                data = json.load(file)
+                data = json.load(file) # read file
             except json.decoder.JSONDecodeError:
                 print('check your json file')
                 sys.exit(0)
 
-            # wipe filee
+            # wipe file
             file.seek(0)
             file.truncate()
 
             try:
-                data['shares'][ID].append({ # add new price to appropriate id
+                data['shares'].append({ # add new price to appropriate id
+                    "id": obj.getID(),
                     "price": obj.getPrice()
                 })
             except AttributeError:
                 # uh oh!!! that ID doesnt exist yet!! just create it :)
                 print(data['shares'])
                 data['shares'].append({
-                    ID: ''
+                    "id": obj.getID(),
+                    "price": obj.getPrice()
                 })
 
             data = str(data).replace("'", '"')
@@ -94,11 +94,14 @@ class ShareObj(object):
     def getChangeFormatted(self):
         self.share.get_percent_change()
 
+    def getID(self):
+        return self.id
+
     def refresh(self):
         self.share.refresh()
 
 w = Wallet()
-shre = ShareObj("AAPL")
+shre = ShareObj("TSLA")
 
 percentChange = 0.15
 
