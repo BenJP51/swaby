@@ -101,7 +101,7 @@ class ShareObj(object):
         self.share.refresh()
 
 w = Wallet()
-shre = ShareObj("TSLA")
+shre = ShareObj("AMZN")
 
 percentChange = 0.15
 
