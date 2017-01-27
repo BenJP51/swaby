@@ -1,5 +1,5 @@
 from yahoo_finance import Share
-import time, json, sys, datetime
+import time, json, sys
 
 class Wallet():
 
@@ -29,7 +29,7 @@ class Wallet():
                     highestIDIndex = 0
 
                     for i in range(0,len(data["shares"])): #iterate through all shares TRY ISNT GOING THROUGH
-                        if(data["shares"][i]["id"] == obj.getID()): # if the iteration of the shares has the same ID
+                        if(data["shares"][i]["id"] == obj.getID()): #get the most recently added share
                             highestIDIndex = i
 
                     if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)): #it's checking for all shares. I need it to check the most recent one
@@ -60,8 +60,6 @@ class Wallet():
         obj = ShareObj(ID)
         obj.refresh()
 
-        self.cash += float(obj.getPrice())
-
         with open('data.json', 'r+') as file: #open file
             try:
                 data = json.load(file) # read file
@@ -72,21 +70,36 @@ class Wallet():
             file.seek(0) #wipe file
             file.truncate()
 
-            for index in range(0,len(data["shares"])): #for the amount of shares recorded in json file
+            exists = False #checks to see if stock is owned
+
+            for i in range(0,len(data["shares"])): #for the amount of shares recorded in json file
                 try:
-                    isValid = data["shares"][index]["id"] #checks if valid id
+                    if(data["shares"][i]["id"] == obj.getID()): #checks if valid id, as in, does this share exist in the JSON?
+                        exists = True
                 except AttributeError: #if error, report it
                     print("ERROR - SELLING - share ID doesn't exist.")
+                    sys.exit(0)
 
-                if(data["shares"][index]["id"] == ID): #if valid, check if IDs match
-                    del data["shares"][index] #if match, delete
+            if(exists == False):
+                print("ERROR - SELLING - Stock not owned!!")
+                sys.exit(0)
 
-                index += 1 #add one to index
+            shareAmount = [] #list of indexes of items to be removed
+            counter = 0 #
+
+            for i in range(len(data["shares"])):
+                if(data["shares"][i]["id"] == obj.getID()): #create list of indexes of shares to be removed and sold
+                    shareAmount.insert(0,i)
+
+            for i in range(len(shareAmount)):
+                del data["shares"][shareAmount[i]] #sell all shares of id
 
             data = str(data).replace("'", '"') #clean up json
 
             file.write(data)#write to json
             file.close() #close json
+
+        self.cash += float(obj.getPrice())*int(len(shareAmount))
 
     def getCash(self):
         return self.cash
@@ -116,15 +129,17 @@ class ShareObj(object):
         self.share.refresh()
 
 w = Wallet()
-shre = ShareObj("AMZN")
+shre = ShareObj("TWTR")
 
-percentChange = 0.15
+percentChange = 0.05
 
 print("Initializing...\n")
 
 while(True):
+    shre.refresh
+
     print("Wallet:\t\t\t",w.getCash())
-    print("Percent Change:\t\t", shre.getChange(),"\n")
+    print("% Change of",shre.getID(),":\t", shre.getChange(),"\n")
 
     if(float(shre.getChange()) >= percentChange):
         print("Buy")
@@ -139,10 +154,9 @@ while(True):
 
         w.sell(shre.id)
 
-        print("Wallet before sell:t\t",w.getCash())
+        print("Wallet before sell:\t",w.getCash())
     else:
         print("Do Nothing")
     print("\n")
 
-    shre.refresh
     time.sleep(5)
