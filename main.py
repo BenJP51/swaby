@@ -31,7 +31,6 @@ class Wallet():
                     for i in range(0,len(data["shares"])): #iterate through all shares TRY ISNT GOING THROUGH
                         if(data["shares"][i]["id"] == obj.getID()): # if the iteration of the shares has the same ID
                             highestIDIndex = i
-                            print(highestIDIndex)
 
                     if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)): #it's checking for all shares. I need it to check the most recent one
                             data["shares"].append({ # add new price to appropriate id
