@@ -16,7 +16,7 @@ class Wallet():
         obj.refresh()
 
         if(self.cash > float(obj.getPrice())): #if you have sufficient funds
-            self.cash -= float(obj.getPrice()) #buy that shit
+            self.setCash(self.cash - float(obj.getPrice())) #buy that shit
 
             with open('data.json', 'r+') as file:
                 try:
@@ -69,6 +69,8 @@ class Wallet():
                 file.write(data)
                 file.close()
 
+                self.writeCash()
+
     def sell(self, ID):
         obj = ShareObj(ID)
         obj.refresh()
@@ -111,10 +113,30 @@ class Wallet():
             file.write(data)#write to json
             file.close() #close json
 
-        self.cash += float(obj.getPrice())*int(len(shareAmount))
+            self.setCash(self.cash + float(obj.getPrice())*int(len(shareAmount)))
+            self.writeCash()
 
     def getCash(self):
         return self.cash
+
+    def setCash(self, value):
+        self.cash = value
+
+    def writeCash(self):
+        with open('data.json', 'r+') as file: #open file
+            try:
+                data = json.load(file) # read file
+                data["userdata"]["wallet"] = self.cash
+            except ValueError:
+                raise ValueError('Cannot read JSON file')
+
+            file.seek(0)
+            file.truncate()
+
+            data = str(data).replace("'", '"')
+
+            file.write(data)
+            file.close()
 
 class ShareObj(object):
     def __init__(self, ID):
