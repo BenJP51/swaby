@@ -154,23 +154,23 @@ print("Initializing...\n")
 while(True):
     shre.refresh
 
-    print("Wallet:\t\t\t",w.getCash())
+    print("Wallet: %.2f\t\t\t" % w.getCash())
     print("% Change of",shre.getID(),":\t", shre.getChange(),"\n")
 
     if(float(shre.getChange()) >= percentChange):
         print("Buy")
-        print("Wallet before buy:\t",w.getCash())
+        print("Wallet before buy: %.2f\t" % w.getCash())
 
         w.buy(shre.id)
 
-        print("Wallet after buy:\t",w.getCash())
+        print("Wallet after buy: %.2f\t" % w.getCash())
     elif(float(shre.getChange()) <= (-1*percentChange)):
         print("Sell")
-        print("Waller before sell:\t",w.getCash())
+        print("Waller before sell:%.2f\t" % w.getCash())
 
         w.sell(shre.id)
 
-        print("Wallet before sell:\t",w.getCash())
+        print("Wallet before sell: %.2f\t" % w.getCash())
     else:
         print("Do Nothing")
     print("\n")

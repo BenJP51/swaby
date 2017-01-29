@@ -1,6 +1,1 @@
-{
-  "userdata": {
-    "wallet": 10000
-  },
-  "shares": []
-}
+{"userdata": {"wallet": 10000}, "shares": [{"id": "TSLA", "price": "252.95", "time": "17:19:18", "change": 0.17}]}
