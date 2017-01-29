@@ -1,1 +1,6 @@
-{"shares": [{"price": "252.95", "time": "17:02:45", "id": "TSLA", "change": 0.17}]}
+{
+  "userdata": {
+    "wallet": 10000
+  },
+  "shares": []
+}

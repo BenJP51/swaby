@@ -4,7 +4,13 @@ import time, json, sys
 class Wallet():
 
     def __init__(self):
-        self.cash = 10000
+        with open('data.json', 'r+') as file: #open file
+            try:
+                data = json.load(file) # read file
+                self.cash = data["userdata"]["wallet"]
+            except json.decoder.JSONDecodeError:
+                print("Error - Check JSON file!") #error check -- json file error
+                sys.exit(0)
 
     def buy(self, ID):
         obj = ShareObj(ID)
@@ -137,6 +143,8 @@ class ShareObj(object):
         self.share.refresh()
 
 w = Wallet()
+
+
 shre = ShareObj("TSLA")
 
 percentChange = 0.05
