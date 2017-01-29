@@ -8,9 +8,8 @@ class Wallet():
             try:
                 data = json.load(file) # read file
                 self.cash = data["userdata"]["wallet"]
-            except json.decoder.JSONDecodeError:
-                print("Error - Check JSON file!") #error check -- json file error
-                sys.exit(0)
+            except ValueError:
+                raise ValueError('Cannot read JSON file')
 
     def buy(self, ID):
         obj = ShareObj(ID)
