@@ -93,7 +93,6 @@ class Wallet():
                 except AttributeError: #if error, report it
                     print("ERROR - SELLING - share ID doesn't exist.")
                     sys.exit(0)
-
             if(exists == False):
                 print("ERROR - SELLING - Stock not owned!!")
                 sys.exit(0)
@@ -122,6 +121,7 @@ class ShareObj(object):
     def __init__(self, ID):
         self.id = ID
         self.share = Share(self.id)
+        self.refresh
 
     def getPrice(self):
         return self.share.get_price()
@@ -144,35 +144,36 @@ class ShareObj(object):
 
 w = Wallet()
 
-
-shre = ShareObj("TSLA")
+stocksToWatch = ["TSLA", "AMZN", "FB", "MSFT", "GOOG"]
 
 percentChange = 0.05
 
 print("Initializing...\n")
 
 while(True):
-    shre.refresh
+    for i in stocksToWatch:
+        shre = ShareObj(i)
+        shre.refresh()
 
-    print("Wallet:\t\t\t",w.getCash())
-    print("% Change of",shre.getID(),":\t", shre.getChange(),"\n")
+        print("Wallet:\t\t\t",w.getCash())
+        print("% Change of",shre.getID(),":\t", shre.getChange(),"\n")
 
-    if(float(shre.getChange()) >= percentChange):
-        print("Buy")
-        print("Wallet before buy:\t",w.getCash())
+        if(float(shre.getChange()) >= percentChange):
+            print("Buy")
+            print("Wallet before buy:\t",w.getCash())
 
-        w.buy(shre.id)
+            w.buy(shre.id)
 
-        print("Wallet after buy:\t",w.getCash())
-    elif(float(shre.getChange()) <= (-1*percentChange)):
-        print("Sell")
-        print("Waller before sell:\t",w.getCash())
+            print("Wallet after buy:\t",w.getCash())
+        elif(float(shre.getChange()) <= (-1*percentChange)):
+            print("Sell")
+            print("Waller before sell:\t",w.getCash())
 
-        w.sell(shre.id)
+            w.sell(shre.id)
 
-        print("Wallet before sell:\t",w.getCash())
-    else:
-        print("Do Nothing")
-    print("\n")
+            print("Wallet before sell:\t",w.getCash())
+        else:
+            print("Do Nothing")
+        print("\n")
 
     time.sleep(5)
