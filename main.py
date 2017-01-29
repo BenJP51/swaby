@@ -26,21 +26,29 @@ class Wallet():
 
 
                 try: #to allow for multiple shares to be done you could like set a variable of percent change in the json, read that. if that *= 0.05 isn't less that the current percent change, don't buy again
-                    highestIDIndex = 0
+                    highestIDIndex = -1
 
                     for i in range(0,len(data["shares"])): #iterate through all shares TRY ISNT GOING THROUGH
                         if(data["shares"][i]["id"] == obj.getID()): #get the most recently added share
                             highestIDIndex = i
 
-                    if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)): #it's checking for all shares. I need it to check the most recent one
-                            data["shares"].append({ # add new price to appropriate id
-                                "id": obj.getID(),
-                                "price": obj.getPrice(),
-                                "time": time.strftime("%H:%M:%S"),
-                                "change": obj.getChange()
-                            })
+                    if(highestIDIndex != -1): # if highestIDIndex is -1, it means that the share is not yet owned, so add it w/o comparing change
+                        if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)):
+                                data["shares"].append({ # add new price to appropriate id
+                                    "id": obj.getID(),
+                                    "price": obj.getPrice(),
+                                    "time": time.strftime("%H:%M:%S"),
+                                    "change": obj.getChange()
+                                })
+                        else:
+                            print("Change not enough to buy another share!")
                     else:
-                        print("Change not enough to buy another share!")
+                        data["shares"].append({ # add new price to appropriate id
+                            "id": obj.getID(),
+                            "price": obj.getPrice(),
+                            "time": time.strftime("%H:%M:%S"),
+                            "change": obj.getChange()
+                        })
 
                 except AttributeError:
                     # uh oh!!! that ID doesnt exist yet!! just create it :)
@@ -129,7 +137,7 @@ class ShareObj(object):
         self.share.refresh()
 
 w = Wallet()
-shre = ShareObj("TWTR")
+shre = ShareObj("TSLA")
 
 percentChange = 0.05
 
