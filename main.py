@@ -16,7 +16,6 @@ class Wallet():
         obj.refresh()
 
         if(self.cash > float(obj.getPrice())): #if you have sufficient funds
-            self.setCash(self.cash - float(obj.getPrice())) #buy that shit
 
             with open('data.json', 'r+') as file:
                 try:
@@ -46,6 +45,7 @@ class Wallet():
                                     "change": obj.getChange()
                                 })
                         else:
+                            error = True
                             print("Change not enough to buy another share!")
                     else:
                         data["shares"].append({ # add new price to appropriate id
@@ -68,6 +68,9 @@ class Wallet():
 
                 file.write(data)
                 file.close()
+
+                if not (error):
+                    self.setCash(self.cash - float(obj.getPrice())) #buy that shit
 
                 self.writeCash()
 
@@ -94,7 +97,7 @@ class Wallet():
                 except AttributeError: #if error, report it
                     print("ERROR - SELLING - share ID doesn't exist.")
                     sys.exit(0)
-            if(exists == False):
+            if not (exists):
                 print("ERROR - SELLING - Stock not owned!!")
                 sys.exit(0)
 
@@ -169,31 +172,31 @@ stocksToWatch = ["TSLA", "AMZN", "FB", "MSFT", "GOOG"]
 
 percentChange = 0.05
 
-print("Initializing...\n")
-
 while(True):
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
 
-        print("Wallet: %.2f\t\t\t" % w.getCash())
-        print("% Change of",shre.getID(),":\t", shre.getChange(),"\n")
+        print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+        print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [CHANGE] "+str(shre.getChange())+"%")
 
         if(float(shre.getChange()) >= percentChange):
-            print("Buy")
-            print("Wallet before buy: %.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [BUY]")
+            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY]")
 
-            w.buy(shre.id)
+            w.buy(shre.getID())
 
-            print("Wallet after buy: %.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
         elif(float(shre.getChange()) <= (-1*percentChange)):
-            print("Sell")
-            print("Waller before sell:%.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [SELL]")
+            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL]")
 
-            w.sell(shre.id)
+            w.sell(shre.getID())
 
-            print("Wallet after sell: %.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
         else:
-            print("Do Nothing")
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+percentChange)
         print("\n")
     time.sleep(5)

@@ -1,13 +1,1 @@
-{
-  "userdata": {
-    "wallet": 9494.099999999999
-  },
-  "shares": [
-    {
-      "id": "AMZN",
-      "price": "252.95",
-      "change": 0.17,
-      "time": "01:20:12"
-    }
-  ]
-}
+{"userdata": {"wallet": 10000}, "shares": []}
