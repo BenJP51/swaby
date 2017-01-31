@@ -32,7 +32,7 @@ class Wallet():
                 try: #to allow for multiple shares to be done you could like set a variable of percent change in the json, read that. if that *= 0.05 isn't less that the current percent change, don't buy again
                     highestIDIndex = -1
 
-                    for i in range(0,len(data["shares"])): #iterate through all shares TRY ISNT GOING THROUGH
+                    for i in range(0,len(data["shares"])): #iterate through all shares
                         if(data["shares"][i]["id"] == obj.getID()): #get the most recently added share
                             highestIDIndex = i
 
@@ -88,18 +88,15 @@ class Wallet():
             file.seek(0) #wipe file
             file.truncate()
 
-            exists = False #checks to see if stock is owned
+            if not (self.isOwned(obj.getID(), data)):
+                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] Share Not Owned")
 
-            for i in range(0,len(data["shares"])): #for the amount of shares recorded in json file
-                try:
-                    if(data["shares"][i]["id"] == obj.getID()): #checks if valid id, as in, does this share exist in the JSON?
-                        exists = True
-                except AttributeError: #if error, report it
-                    print("ERROR - SELLING - share ID doesn't exist.")
-                    sys.exit(0)
-            if not (exists):
-                print("ERROR - SELLING - Stock not owned!!")
-                sys.exit(0)
+                data = str(data).replace("'", '"') #clean up json
+
+                file.write(data)#write to json
+                file.close() #close json
+
+                return
 
             shareAmount = [] #list of indexes of items to be removed
             counter = 0 #
@@ -141,6 +138,18 @@ class Wallet():
             file.write(data)
             file.close()
 
+    def isOwned(self, ID, data):
+        with open('data.json', 'r+') as file: # open file
+            for i in range(0,len(data["shares"])): #for the amount of shares recorded in json file
+                try:
+                    if(data["shares"][i]["id"] == ID): #checks if valid id, as in, does this share exist in the JSON?
+                        print(ID + " OWNED")
+                        return True
+                except AttributeError: #if error, report it
+                    print("ERROR - SELLING - share ID doesn't exist.")
+                    return False
+        return False
+
 class ShareObj(object):
     def __init__(self, ID):
         self.id = ID
@@ -154,8 +163,11 @@ class ShareObj(object):
         return self.share.get_open()
 
     def getChange(self):
-        percent = self.share.get_percent_change()
-        return float(percent[:-1])
+        if(self.share.get_percent_change() == None):
+            return 0
+        else:
+            percent = (self.share.get_percent_change()[:-1])
+            return float(percent)
 
     def getChangeFormatted(self):
         self.share.get_percent_change()
@@ -168,7 +180,7 @@ class ShareObj(object):
 
 w = Wallet()
 
-stocksToWatch = ["TSLA", "AMZN", "FB", "MSFT", "GOOG"]
+stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"]
 
 percentChange = 0.05
 
@@ -177,7 +189,7 @@ while(True):
         shre = ShareObj(i)
         shre.refresh()
 
-        print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+        print("["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
         print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [CHANGE] "+str(shre.getChange())+"%")
 
         if(float(shre.getChange()) >= percentChange):
@@ -197,6 +209,6 @@ while(True):
 
             print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
         else:
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+percentChange)
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
         print("\n")
     time.sleep(5)
