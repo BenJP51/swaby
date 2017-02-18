@@ -35,7 +35,7 @@ class Wallet():
                     for i in range(0,len(data["shares"])): #iterate through all shares
                         if(data["shares"][i]["id"] == obj.getID()): #get the most recently added share
                             highestIDIndex = i
-
+                    error = False
                     if(highestIDIndex != -1): # if highestIDIndex is -1, it means that the share is not yet owned, so add it w/o comparing change
                         if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)):
                                 data["shares"].append({ # add new price to appropriate id
