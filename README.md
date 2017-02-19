@@ -12,4 +12,5 @@ python main.py
 
 ## ToDo
  - Logging in External Files
- - Config file?
+ - Config file
+ - Cryptocurrencies
