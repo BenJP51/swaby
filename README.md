@@ -9,3 +9,7 @@ cd swaby && pip install -r requirements.txt
 
 python main.py
 ```
+
+## ToDo
+ - Logging in External Files
+ - Config file?

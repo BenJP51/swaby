@@ -211,4 +211,4 @@ while(True):
         else:
             print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
         print("\n")
-    time.sleep(5)
+    time.sleep(15)
