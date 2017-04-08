@@ -187,9 +187,7 @@ try:
     w = Wallet()
 
     stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"]
-
-    percentChange = 0.05
-    reps = 2
+    reps = 7500
     while(reps > 0):
         for i in stocksToWatch:
             shre = ShareObj(i)
@@ -219,7 +217,7 @@ try:
                 print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
             print("\n")
         reps -= 1
-        time.sleep(120) # wait two minutes
+        time.sleep(60) # wait two minutes
 
     for i in stocksToWatch:
         shre = ShareObj(i)
