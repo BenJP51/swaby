@@ -89,7 +89,7 @@ class Wallet():
             file.truncate()
 
             if not (self.isOwned(obj.getID(), data)):
-                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] Share Not Owned")
+                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ ID +"] [SELL] Share Not Owned")
 
                 data = str(data).replace("'", '"') #clean up json
 
@@ -143,7 +143,6 @@ class Wallet():
             for i in range(0,len(data["shares"])): #for the amount of shares recorded in json file
                 try:
                     if(data["shares"][i]["id"] == ID): #checks if valid id, as in, does this share exist in the JSON?
-                        print(ID + " OWNED")
                         return True
                 except AttributeError: #if error, report it
                     print("ERROR - SELLING - share ID doesn't exist.")
@@ -169,6 +168,12 @@ class ShareObj(object):
             percent = (self.share.get_percent_change()[:-1])
             return float(percent)
 
+    def getFiftyDay(self):
+        return self.share.get_50day_moving_avg()
+
+    def getTwoHunDay(self):
+        return self.share.get_200day_moving_avg()
+
     def getChangeFormatted(self):
         self.share.get_percent_change()
 
@@ -178,37 +183,54 @@ class ShareObj(object):
     def refresh(self):
         self.share.refresh()
 
-w = Wallet()
+try:
+    w = Wallet()
 
-stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG", "BTC"]
+    stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"]
 
-percentChange = 0.05
+    percentChange = 0.05
+    reps = 2
+    while(reps > 0):
+        for i in stocksToWatch:
+            shre = ShareObj(i)
+            shre.refresh()
 
-while(True):
+            print("["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay()))
+            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [200DAY] "+str(shre.getTwoHunDay()))
+
+            if(shre.getFiftyDay() >= shre.getTwoHunDay()):
+                print("["+time.strftime("%H:%M:%S")+"] [BUY]")
+                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
+
+                w.buy(shre.getID())
+
+                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+            elif(shre.getFiftyDay() <= shre.getTwoHunDay()):
+                print("["+time.strftime("%H:%M:%S")+"] [SELL]")
+                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
+
+                w.sell(shre.getID())
+
+                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
+            else:
+                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
+            print("\n")
+        reps -= 1
+        time.sleep(120) # wait two minutes
+
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
+        w.sell(shre.getID())
 
-        print("["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
-        print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [CHANGE] "+str(shre.getChange())+"%")
+    print("Final total: "+ str(w.getCash()))
+except KeyboardInterrupt:
+    for i in stocksToWatch:
+        shre = ShareObj(i)
+        shre.refresh()
+        w.sell(shre.getID())
 
-        if(float(shre.getChange()) >= percentChange):
-            print("["+time.strftime("%H:%M:%S")+"] [BUY]")
-            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
-
-            w.buy(shre.getID())
-
-            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-        elif(float(shre.getChange()) <= (-1*percentChange)):
-            print("["+time.strftime("%H:%M:%S")+"] [SELL]")
-            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
-
-            w.sell(shre.getID())
-
-            print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-        else:
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
-        print("\n")
-    time.sleep(15)
+    print("Final total: "+ str(w.getCash()))
