@@ -185,6 +185,7 @@ class ShareObj(object):
 
 try:
     w = Wallet()
+    f = open('output.txt', 'w')
 
     stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"]
     reps = 7500
@@ -194,13 +195,20 @@ try:
             shre.refresh()
 
             print("["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
+            f.write("\n["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
+
             print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay()))
+            f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay()))
+
             print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [200DAY] "+str(shre.getTwoHunDay()))
+            f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [200DAY] "+str(shre.getTwoHunDay()))
 
             if(shre.getFiftyDay() >= shre.getTwoHunDay()):
                 print("["+time.strftime("%H:%M:%S")+"] [BUY]")
                 print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
                 print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
+
+                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
 
                 w.buy(shre.getID())
 
@@ -210,11 +218,14 @@ try:
                 print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
                 print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
 
+                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
+
                 w.sell(shre.getID())
 
                 print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
             else:
                 print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
+                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
             print("\n")
         reps -= 1
         time.sleep(60) # wait two minutes
@@ -223,12 +234,13 @@ try:
         shre = ShareObj(i)
         shre.refresh()
         w.sell(shre.getID())
-
+    f.write("\nFinal total: "+ str(w.getCash()))
     print("Final total: "+ str(w.getCash()))
+
 except KeyboardInterrupt:
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
         w.sell(shre.getID())
-
+    f.write("\nFinal total: "+ str(w.getCash()))
     print("Final total: "+ str(w.getCash()))
