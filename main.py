@@ -60,42 +60,41 @@ class Wallet():
         obj = ShareObj(ID)
         obj.refresh()
 
-        with open('data.json', 'r+') as file: #open file
+        with open('data.json', 'r+') as file: # open file
             try:
                 data = json.load(file) # read file
             except json.decoder.JSONDecodeError:
-                print("Error - Check JSON file!") #error check -- json file error
+                print("Error - Check JSON file!") # error check -- json file error
                 sys.exit(0)
 
-            file.seek(0) #wipe file
+            file.seek(0) # wipe file
             file.truncate()
 
             if (self.numOwned(obj.getID(), data) == 0):
-                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ ID +"] [SELL] Share Not Owned")
+                print("["+time.strftime("%H:%M:%S")+"] ["+ ID +"] [SELL] Share Not Owned")
 
-                data = str(data).replace("'", '"') #clean up json
+                data = str(data).replace("'", '"') # clean up json
 
-                file.write(data)#write to json
-                file.close() #close json
+                file.write(data)# write to json
+                file.close() # close json
 
                 return
 
-            shareAmount = [] #list of indexes of items to be removed
-            counter = 0 #
+            shareAmount = [] # list of indexes of items to be removed
 
-            for i in range(len(data["shares"])):
-                if(data["shares"][i]["id"] == obj.getID()): #create list of indexes of shares to be removed and sold
+            for i in range(self.numOwned(obj.getID(), data)):
+                if(data["shares"][i]["id"] == obj.getID()): #c reate list of indexes of shares to be removed and sold
                     shareAmount.insert(0,i)
 
             for i in range(len(shareAmount)):
-                del data["shares"][shareAmount[i]] #sell all shares of id
+                del data["shares"][shareAmount[i]] # sell all shares of id
 
-            data = str(data).replace("'", '"') #clean up json
+            data = str(data).replace("'", '"') # clean up json
 
-            file.write(data)#write to json
-            file.close() #close json
+            file.write(data)# write to json
+            file.close() # close json
 
-            self.setCash(self.cash + float(obj.getPrice())*int(len(shareAmount)))
+            self.setCash(self.cash + (float(obj.getPrice()) * int(len(shareAmount))))
             self.writeCash()
 
     def getCash(self):
@@ -136,17 +135,20 @@ class ShareObj(object):
     def __init__(self, ID):
         self.id = ID
         self.share = Share(self.id)
-        self.refresh
+        self.refresh()
 
     def getPrice(self):
+        self.refresh()
         return self.share.get_price()
 
     def getOpenPrice(self):
+        self.refresh()
         return self.share.get_open()
 
     def getChange(self):
+        self.refresh()
         if(self.share.get_percent_change() == None):
-            return 0
+            return float(0)
         else:
             percent = (self.share.get_percent_change()[:-1])
             return float(percent)
@@ -155,23 +157,28 @@ class ShareObj(object):
         return self.share.get_50day_moving_avg()
 
     def getTwoHunDay(self):
+        self.refresh()
         return self.share.get_200day_moving_avg()
 
     def getChangeFormatted(self):
-        self.share.get_percent_change()
+        self.refresh()
+        return self.share.get_percent_change()
 
     def getID(self):
         return self.id
 
     def refresh(self):
-        self.share.refresh()
+        try:
+            self.share.refresh()
+        except YQLQueryError: #if the service is down, don't do anything
+            return
 
 try:
     w = Wallet()
     f = open('output.txt', 'w')
 
-    stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"]
-    reps = 7500
+    stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"] #shares to cycle through
+    reps = 1440
     while(reps > 0):
         for i in stocksToWatch:
             shre = ShareObj(i)
@@ -206,11 +213,12 @@ try:
             else:
                 strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange)
                 print(strToWrite)
-                f.write("\n"+strToWrite)
 
             print("\n")
         reps -= 1
-        time.sleep(25) # wait two minutes
+        time.sleep(60) # wait a minute
+
+    f = open('final.txt', 'w') #i just want to clarify the final total, so therefore am putting final wallet output in a seperate file
 
     for i in stocksToWatch:
         shre = ShareObj(i)
@@ -222,7 +230,9 @@ try:
     print(strToWrite)
     f.write("\n"+strToWrite)
 
-except KeyboardInterrupt:
+except KeyboardInterrupt: # If i hit control+C and stop the script, It will still write final data
+    f = open('final.txt', 'w') #i just want to clarify the final total, so therefore am putting final wallet output in a seperate file
+
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
