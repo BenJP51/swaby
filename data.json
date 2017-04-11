@@ -1,1 +1,6 @@
-{"shares": [{"time": "23:12:09", "change": 1.29, "id": "TSLA", "price": "302.54"}, {"time": "23:12:10", "change": -0.28, "id": "FB", "price": "140.78"}, {"time": "23:12:10", "change": -0.08, "id": "MSFT", "price": "65.68"}, {"time": "23:12:15", "change": -0.38, "id": "AMZN", "price": "894.88"}, {"time": "23:12:15", "change": -0.39, "id": "GOOG", "price": "824.67"}, {"time": "13:36:37", "change": 0.0, "id": "MSFT", "price": "65.68"}, {"time": "13:44:52", "change": 0.0, "id": "AMZN", "price": "894.88"}, {"time": "13:47:57", "change": 3.033, "id": "TSLA", "price": "311.715"}, {"time": "13:53:28", "change": 0.0, "id": "GOOG", "price": "824.67"}, {"time": "20:03:28", "change": 0.13, "id": "GOOG", "price": "825.75"}, {"time": "23:50:34", "change": 1.36, "id": "AMZN", "price": "907.04"}, {"time": "23:59:47", "change": 3.26, "id": "TSLA", "price": "312.39"}, {"time": "01:13:49", "change": 0.18, "id": "FB", "price": "141.04"}], "userdata": {"wallet": 3488.2849999999985}}
+{
+  "shares": [],
+  "userdata": {
+    "wallet": 10000
+  }
+}

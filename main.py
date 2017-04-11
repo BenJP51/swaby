@@ -1,5 +1,5 @@
 from yahoo_finance import Share
-import time, json, sys
+import time, json, sys, math
 
 class Wallet():
 
@@ -15,39 +15,22 @@ class Wallet():
         obj = ShareObj(ID)
         obj.refresh()
 
-        if(self.cash > float(obj.getPrice())): #if you have sufficient funds
+        with open('data.json', 'r+') as file:
+            try:
+                data = json.load(file) # read file
+            except json.decoder.JSONDecodeError:
+                print('Error loading JSON - Check your JSON file')
+                sys.exit(0)
 
-            with open('data.json', 'r+') as file:
-                try:
-                    data = json.load(file) # read file
-                except json.decoder.JSONDecodeError:
-                    print('Error loading JSON - Check your JSON file')
-                    sys.exit(0)
+            if(self.cash > float(obj.getPrice())): #if you have sufficient funds
+                movingAvgPercentDifference = (math.fabs(float(obj.getFiftyDay()) - float(obj.getTwoHunDay()))/((float(obj.getFiftyDay()) + float(obj.getTwoHunDay()))/2))*100
+                if (float(self.numOwned(obj.getID(), data)) >= math.floor(movingAvgPercentDifference)):
+                    print("Number of",obj.getID(),"shares owned is greater than or equal to the percent difference of the 50/200 day moving average and therefore will not be bought.")
+                else:
+                    file.seek(0)
+                    file.truncate()
 
-                # wipe file
-                file.seek(0)
-                file.truncate()
-
-
-                try: #to allow for multiple shares to be done you could like set a variable of percent change in the json, read that. if that *= 0.05 isn't less that the current percent change, don't buy again
-                    highestIDIndex = -1
-
-                    for i in range(0,len(data["shares"])): #iterate through all shares
-                        if(data["shares"][i]["id"] == obj.getID()): #get the most recently added share
-                            highestIDIndex = i
-                    error = False
-                    if(highestIDIndex != -1): # if highestIDIndex is -1, it means that the share is not yet owned, so add it w/o comparing change
-                        if(float(data["shares"][highestIDIndex]["change"]) < (obj.getChange() - 0.01)):
-                                data["shares"].append({ # add new price to appropriate id
-                                    "id": obj.getID(),
-                                    "price": obj.getPrice(),
-                                    "time": time.strftime("%H:%M:%S"),
-                                    "change": obj.getChange()
-                                })
-                        else:
-                            error = True
-                            print("Change not enough to buy another share!")
-                    else:
+                    try: #to allow for multiple shares to be done you could like set a variable of percent change in the json, read that. if that *= 0.05 isn't less that the current percent change, don't buy again
                         data["shares"].append({ # add new price to appropriate id
                             "id": obj.getID(),
                             "price": obj.getPrice(),
@@ -55,24 +38,23 @@ class Wallet():
                             "change": obj.getChange()
                         })
 
-                except AttributeError:
-                    # uh oh!!! that ID doesnt exist yet!! just create it :)
-                    data['shares'].append({
-                        "id": obj.getID(),
-                        "price": obj.getPrice(),
-                        "time": time.strftime("%H:%M:%S"),
-                        "change": obj.getChange()
-                    })
+                    except AttributeError: # uh oh!!! that ID doesnt exist yet!! just create it :)
+                        data['shares'].append({
+                            "id": obj.getID(),
+                            "price": obj.getPrice(),
+                            "time": time.strftime("%H:%M:%S"),
+                            "change": obj.getChange()
+                        })
 
-                data = str(data).replace("'", '"')
+                    data = str(data).replace("'", '"')
 
-                file.write(data)
-                file.close()
+                    file.write(data)
+                    file.close()
 
-                if not (error):
                     self.setCash(self.cash - float(obj.getPrice())) #buy that shit
-
-                self.writeCash()
+                    self.writeCash()
+            else:
+                print("Insufficient funds")
 
     def sell(self, ID):
         obj = ShareObj(ID)
@@ -88,7 +70,7 @@ class Wallet():
             file.seek(0) #wipe file
             file.truncate()
 
-            if not (self.isOwned(obj.getID(), data)):
+            if (self.numOwned(obj.getID(), data) == 0):
                 print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ ID +"] [SELL] Share Not Owned")
 
                 data = str(data).replace("'", '"') #clean up json
@@ -138,16 +120,17 @@ class Wallet():
             file.write(data)
             file.close()
 
-    def isOwned(self, ID, data):
+    def numOwned(self, ID, data):
+        numOwned = 0
         with open('data.json', 'r+') as file: # open file
             for i in range(0,len(data["shares"])): #for the amount of shares recorded in json file
                 try:
                     if(data["shares"][i]["id"] == ID): #checks if valid id, as in, does this share exist in the JSON?
-                        return True
+                        numOwned += 1
                 except AttributeError: #if error, report it
-                    print("ERROR - SELLING - share ID doesn't exist.")
-                    return False
-        return False
+                    print("ERROR - numOwned - share ID doesn't exist.")
+                    return 0
+        return numOwned
 
 class ShareObj(object):
     def __init__(self, ID):
@@ -194,53 +177,57 @@ try:
             shre = ShareObj(i)
             shre.refresh()
 
-            print("["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
-            f.write("\n["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash())
+            strToWrite = "["+time.strftime("%H:%M:%S")+"] [WALLET] $%.2f\t" % w.getCash()
 
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay()))
-            f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay()))
+            print(strToWrite)
+            f.write("\n"+strToWrite)
 
-            print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [200DAY] "+str(shre.getTwoHunDay()))
-            f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [200DAY] "+str(shre.getTwoHunDay()))
+            strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+shre.getID()+"] [50DAY] "+str(shre.getFiftyDay())+" [200DAY] "+str(shre.getTwoHunDay())
+
+            print(strToWrite)
+            f.write("\n"+strToWrite)
 
             if(shre.getFiftyDay() >= shre.getTwoHunDay()):
-                print("["+time.strftime("%H:%M:%S")+"] [BUY]")
-                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
+                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice())
 
-                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice()))
+                print(strToWrite)
+                f.write("\n"+strToWrite)
 
                 w.buy(shre.getID())
 
-                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
             elif(shre.getFiftyDay() <= shre.getTwoHunDay()):
-                print("["+time.strftime("%H:%M:%S")+"] [SELL]")
-                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
-                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
+                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice())
 
-                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice()))
+                print(strToWrite)
+                f.write("\n"+strToWrite)
 
                 w.sell(shre.getID())
 
-                print("["+time.strftime("%H:%M:%S")+"] [WALLET] %.2f\t" % w.getCash())
             else:
-                print("["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
-                f.write("\n["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange))
+                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange)
+                print(strToWrite)
+                f.write("\n"+strToWrite)
+
             print("\n")
         reps -= 1
-        time.sleep(60) # wait two minutes
+        time.sleep(25) # wait two minutes
 
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
         w.sell(shre.getID())
-    f.write("\nFinal total: "+ str(w.getCash()))
-    print("Final total: "+ str(w.getCash()))
+
+    strToWrite = "Final total: "+ str(w.getCash())
+
+    print(strToWrite)
+    f.write("\n"+strToWrite)
 
 except KeyboardInterrupt:
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
         w.sell(shre.getID())
-    f.write("\nFinal total: "+ str(w.getCash()))
-    print("Final total: "+ str(w.getCash()))
+    strToWrite = "Final total: "+ str(w.getCash())
+
+    print(strToWrite)
+    f.write("\n"+strToWrite)
