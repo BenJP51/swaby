@@ -33,7 +33,6 @@ class Wallet():
                     try: #to allow for multiple shares to be done you could like set a variable of percent change in the json, read that. if that *= 0.05 isn't less that the current percent change, don't buy again
                         data["shares"].append({ # add new price to appropriate id
                             "id": obj.getID(),
-                            "price": obj.getPrice(),
                             "time": time.strftime("%H:%M:%S"),
                             "change": obj.getChange()
                         })
@@ -41,7 +40,6 @@ class Wallet():
                     except AttributeError: # uh oh!!! that ID doesnt exist yet!! just create it :)
                         data['shares'].append({
                             "id": obj.getID(),
-                            "price": obj.getPrice(),
                             "time": time.strftime("%H:%M:%S"),
                             "change": obj.getChange()
                         })
@@ -138,12 +136,7 @@ class ShareObj(object):
         self.refresh()
 
     def getPrice(self):
-        self.refresh()
         return self.share.get_price()
-
-    def getOpenPrice(self):
-        self.refresh()
-        return self.share.get_open()
 
     def getChange(self):
         self.refresh()
@@ -237,6 +230,8 @@ except KeyboardInterrupt: # If i hit control+C and stop the script, It will stil
         shre = ShareObj(i)
         shre.refresh()
         w.sell(shre.getID())
+        print("["+time.strftime("%H:%M:%S")+"] ["+ shre.getID() +"] [SELLING AT] "+str(shre.getPrice()))
+
     strToWrite = "Final total: "+ str(w.getCash())
 
     print(strToWrite)
