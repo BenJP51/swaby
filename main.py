@@ -1,5 +1,4 @@
-from yahoo_finance import Share
-import time, json, sys, math
+import time, json, sys, math, urllib.request
 
 class Wallet():
 
@@ -11,7 +10,7 @@ class Wallet():
             except ValueError:
                 raise ValueError('Cannot read JSON file')
 
-    def buy(self, ID):
+    def buy(self, ID, askPrice):
         obj = ShareObj(ID)
         obj.refresh()
 
@@ -22,7 +21,7 @@ class Wallet():
                 print('Error loading JSON - Check your JSON file')
                 sys.exit(0)
 
-            if(self.cash > float(obj.getPrice())): #if you have sufficient funds
+            if(self.cash > float(askPrice)): #if you have sufficient funds
                 movingAvgPercentDifference = (math.fabs(float(obj.getFiftyDay()) - float(obj.getTwoHunDay()))/((float(obj.getFiftyDay()) + float(obj.getTwoHunDay()))/2))*100
                 if (float(self.numOwned(obj.getID(), data)) >= math.floor(movingAvgPercentDifference)):
                     print("Number of",obj.getID(),"shares owned is greater than or equal to the percent difference of the 50/200 day moving average and therefore will not be bought.")
@@ -41,7 +40,7 @@ class Wallet():
                         data['shares'].append({
                             "id": obj.getID(),
                             "time": time.strftime("%H:%M:%S"),
-                            "change": obj.getChange()
+                            "change": obj.getChangeFormatted()
                         })
 
                     data = str(data).replace("'", '"')
@@ -49,12 +48,12 @@ class Wallet():
                     file.write(data)
                     file.close()
 
-                    self.setCash(self.cash - float(obj.getPrice())) #buy that shit
+                    self.setCash(self.cash - float(price)) #buy that shit
                     self.writeCash()
             else:
                 print("Insufficient funds")
 
-    def sell(self, ID):
+    def sell(self, ID, bidPrice):
         obj = ShareObj(ID)
         obj.refresh()
 
@@ -92,7 +91,7 @@ class Wallet():
             file.write(data)# write to json
             file.close() # close json
 
-            self.setCash(self.cash + (float(obj.getPrice()) * int(len(shareAmount))))
+            self.setCash(self.cash + (float(bidPrice) * int(len(shareAmount))))
             self.writeCash()
 
     def getCash(self):
@@ -132,44 +131,56 @@ class Wallet():
 class ShareObj(object):
     def __init__(self, ID):
         self.id = ID
-        self.share = Share(self.id)
         self.refresh()
 
-    def getPrice(self):
-        return self.share.get_price()
-
-    def getChange(self):
+    def getBuyPrice(self):
         self.refresh()
-        if(self.share.get_percent_change() == None):
-            return float(0)
-        else:
-            percent = (self.share.get_percent_change()[:-1])
-            return float(percent)
+        while(self.bprice == None):
+            self.refresh()
+        return self.bprice
+
+    def getSellPrice(self):
+        self.refresh()
+        while(self.sprice == None):
+            self.refresh()
+        return self.sprice
 
     def getFiftyDay(self):
-        return self.share.get_50day_moving_avg()
+        return self.fiftyDay
 
     def getTwoHunDay(self):
         self.refresh()
-        return self.share.get_200day_moving_avg()
+        return self.twoHunDay
 
     def getChangeFormatted(self):
         self.refresh()
-        return self.share.get_percent_change()
+        return self.changeF
 
     def getID(self):
         return self.id
 
     def refresh(self):
-        try:
-            self.share.refresh()
-        except YQLQueryError: #if the service is down, don't do anything
-            return
+        urlStr = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(\""+self.id+"\")&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
+        with urllib.request.urlopen(urlStr) as url:
+            data = json.loads(url.read().decode())
+            if data["query"]["results"]["quote"]["Ask"] is None:
+                self.refresh()
+            else:
+                self.bprice = float(data["query"]["results"]["quote"]["Ask"])
+
+            if data["query"]["results"]["quote"]["Bid"] is None:
+                self.refresh()
+            else:
+                self.sprice = float(data["query"]["results"]["quote"]["Bid"])
+
+            self.changeF = str(data["query"]["results"]["quote"]["PercentChange"])
+            self.fiftyDay = float(data["query"]["results"]["quote"]["FiftydayMovingAverage"])
+            self.twoHunDay = float(data["query"]["results"]["quote"]["TwoHundreddayMovingAverage"])
 
 try:
     w = Wallet()
     f = open('output.txt', 'w')
-
+    bought = 0
     stocksToWatch = ["TSLA", "FB", "MSFT", "AMZN", "GOOG"] #shares to cycle through
     reps = 1440
     while(reps > 0):
@@ -188,20 +199,24 @@ try:
             f.write("\n"+strToWrite)
 
             if(shre.getFiftyDay() >= shre.getTwoHunDay()):
-                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(shre.getPrice())
+                price = shre.getBuyPrice()
+
+                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [BUY] "+str(price)
 
                 print(strToWrite)
                 f.write("\n"+strToWrite)
-
-                w.buy(shre.getID())
+                bought+=price
+                w.buy(shre.getID(), price)
 
             elif(shre.getFiftyDay() <= shre.getTwoHunDay()):
-                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(shre.getPrice())
+                price = shre.getSellPrice()
+
+                strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [SELL] "+str(price)
 
                 print(strToWrite)
                 f.write("\n"+strToWrite)
 
-                w.sell(shre.getID())
+                w.sell(shre.getID(), price)
 
             else:
                 strToWrite = "["+time.strftime("%H:%M:%S")+"] [SHARE] ["+ shre.getID() +"] [N/A] [CHANGE] <"+str(percentChange)
@@ -216,7 +231,10 @@ try:
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
-        w.sell(shre.getID())
+
+        price = shre.getSellPrice()
+        w.sell(shre.getID(), price)
+        print("["+time.strftime("%H:%M:%S")+"] ["+ shre.getID() +"] [SELLING AT] "+str(price))
 
     strToWrite = "Final total: "+ str(w.getCash())
 
@@ -225,14 +243,17 @@ try:
 
 except KeyboardInterrupt: # If i hit control+C and stop the script, It will still write final data
     f = open('final.txt', 'w') #i just want to clarify the final total, so therefore am putting final wallet output in a seperate file
-
+    sold = 0
     for i in stocksToWatch:
         shre = ShareObj(i)
         shre.refresh()
-        w.sell(shre.getID())
-        print("["+time.strftime("%H:%M:%S")+"] ["+ shre.getID() +"] [SELLING AT] "+str(shre.getPrice()))
+
+        price = shre.getSellPrice()
+        sold +=price
+        w.sell(shre.getID(), price)
+        print("["+time.strftime("%H:%M:%S")+"] ["+ shre.getID() +"] [SELLING AT] "+str(price))
 
     strToWrite = "Final total: "+ str(w.getCash())
-
+    print(bought,sold,bought-sold)
     print(strToWrite)
     f.write("\n"+strToWrite)
